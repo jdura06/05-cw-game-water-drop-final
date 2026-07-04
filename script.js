@@ -8,9 +8,9 @@ let currentDifficulty = "easy";
 let targetScore = 20;
 
 const difficultySettings = {
-  easy: { dropInterval: 1000, dropDuration: "4s", targetScore: 20 },
-  medium: { dropInterval: 700, dropDuration: "3s", targetScore: 20 },
-  hard: { dropInterval: 500, dropDuration: "2.5s", targetScore: 25 }
+  easy: { dropInterval: 1000, dropDuration: "4s", targetScore: 20, timeLimit: 40 },
+  medium: { dropInterval: 700, dropDuration: "3s", targetScore: 20, timeLimit: 40 },
+  hard: { dropInterval: 500, dropDuration: "2.5s", targetScore: 25, timeLimit: 35 }
 };
 
 const winningMessages = [
@@ -25,6 +25,8 @@ const messageEl = document.getElementById("game-message");
 const startBtn = document.getElementById("start-btn");
 const gameContainer = document.getElementById("game-container");
 const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+const goodDropSound = new Audio("sfx/water_collected.mp3");
+const badDropSound = new Audio("sfx/bad_water_collected.mp3");
 
 startBtn.addEventListener("click", startGame);
 
@@ -41,6 +43,13 @@ function setDifficulty(difficulty) {
   });
 }
 
+function playSound(sound) {
+  if (!sound) return;
+
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
 function startGame() {
   // Prevent multiple games from running at once
   if (gameRunning) return;
@@ -49,7 +58,7 @@ function startGame() {
 
   gameRunning = true;
   score = 0;
-  timeLeft = 40;
+  timeLeft = selectedDifficulty.timeLimit;
   targetScore = selectedDifficulty.targetScore;
   scoreEl.textContent = score;
   timeEl.textContent = timeLeft;
@@ -141,8 +150,10 @@ function createDrop() {
   drop.addEventListener("click", () => {
     if (drop.classList.contains("obstacle-drop")) {
       score -= 1;
+      playSound(badDropSound);
     } else {
       score += 1;
+      playSound(goodDropSound);
     }
 
     scoreEl.textContent = score;
