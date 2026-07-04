@@ -3,7 +3,15 @@ let gameRunning = false; // Keeps track of whether game is active or not
 let dropMaker; // Will store our timer that creates drops regularly
 let timerMaker; // Will store our timer countdown interval
 let score = 0; // Tracks the player's score
-let timeLeft = 30; // Game duration in seconds
+let timeLeft = 40; // Game duration in seconds
+let currentDifficulty = "easy";
+let targetScore = 20;
+
+const difficultySettings = {
+  easy: { dropInterval: 1000, dropDuration: "4s", targetScore: 20 },
+  medium: { dropInterval: 700, dropDuration: "3s", targetScore: 20 },
+  hard: { dropInterval: 500, dropDuration: "2.5s", targetScore: 25 }
+};
 
 const winningMessages = [
   "You win! Great job!",
@@ -11,36 +19,45 @@ const winningMessages = [
   "Champion! You hit the target score!"
 ];
 
-const losingMessages = [
-  "Try again! Reach 20 drops to win.",
-  "Almost there! Play again to get to 20.",
-  "Nice effort — keep practicing and try again!"
-];
-
 const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
 const messageEl = document.getElementById("game-message");
 const startBtn = document.getElementById("start-btn");
 const gameContainer = document.getElementById("game-container");
+const difficultyButtons = document.querySelectorAll(".difficulty-btn");
 
-// Wait for button click to start the game
-document.getElementById("start-btn").addEventListener("click", startGame);
+startBtn.addEventListener("click", startGame);
+
+difficultyButtons.forEach((button) => {
+  button.addEventListener("click", () => setDifficulty(button.dataset.difficulty));
+});
+
+function setDifficulty(difficulty) {
+  currentDifficulty = difficulty;
+  targetScore = difficultySettings[difficulty].targetScore;
+
+  difficultyButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.difficulty === difficulty);
+  });
+}
 
 function startGame() {
   // Prevent multiple games from running at once
   if (gameRunning) return;
 
+  const selectedDifficulty = difficultySettings[currentDifficulty];
+
   gameRunning = true;
   score = 0;
-  timeLeft = 30;
+  timeLeft = 40;
+  targetScore = selectedDifficulty.targetScore;
   scoreEl.textContent = score;
   timeEl.textContent = timeLeft;
   messageEl.textContent = "";
   startBtn.disabled = true;
   gameContainer.querySelectorAll(".water-drop, .obstacle-drop").forEach((drop) => drop.remove());
 
-  // Create new drops every second (1000 milliseconds)
-  dropMaker = setInterval(createDrop, 1000);
+  dropMaker = setInterval(createDrop, selectedDifficulty.dropInterval);
   timerMaker = setInterval(updateTimer, 1000);
 }
 
@@ -63,14 +80,14 @@ function endGame() {
   clearInterval(timerMaker);
   startBtn.disabled = false;
 
-  const endingMessage = score >= 20
+  const endingMessage = score >= targetScore
     ? winningMessages[Math.floor(Math.random() * winningMessages.length)]
-    : losingMessages[Math.floor(Math.random() * losingMessages.length)];
+    : `Try again! Reach ${targetScore} drops to win.`;
 
   messageEl.textContent = endingMessage;
   gameContainer.querySelectorAll(".water-drop, .obstacle-drop").forEach((drop) => drop.remove());
 
-  if (score >= 20) {
+  if (score >= targetScore) {
     showConfetti();
   }
 }
@@ -95,6 +112,7 @@ function showConfetti() {
 }
 
 function createDrop() {
+  const selectedDifficulty = difficultySettings[currentDifficulty];
   const isObstacle = Math.random() < 0.18;
 
   // Create a new div element that will be our drop or obstacle
@@ -113,8 +131,8 @@ function createDrop() {
   const xPosition = Math.random() * (gameWidth - 60);
   drop.style.left = xPosition + "px";
 
-  // Make drops fall for 4 seconds
-  drop.style.animationDuration = "4s";
+  // Apply the chosen difficulty's drop speed
+  drop.style.animationDuration = selectedDifficulty.dropDuration;
 
   // Add the new drop to the game screen
   gameContainer.appendChild(drop);
