@@ -81,6 +81,7 @@ function updateTimer() {
   }
 }
 
+
 function endGame() {
   if (!gameRunning) return;
 
